@@ -5,14 +5,7 @@ import java.nio.file.Paths;
 
 public class Main {
     public static void main(String[] args) {
-        byte[] bytes = codify("text.txt");
-        String text = HuffmanTree.decodify(bytes);
-
-        System.out.println(text);
-    }
-
-    public static byte[] codify(String fileName){
-        Path path = Paths.get(fileName);
+        Path path = Paths.get("text.txt");
         String text = null;
         try {
             text = Files.readString(path);
@@ -24,6 +17,8 @@ public class Main {
         FrequencyTableMap frequencyTableMap = new FrequencyTableMap(text);
         HuffmanTree huffmanTree = new HuffmanTree(frequencyTableMap);
         huffmanTree.printBinaryCodeTable();
-        return huffmanTree.toCodifiedBytes(text);
+        byte[] bytes = huffmanTree.toCodifiedBytes(text);
+        String decodified = Decoder.decodify(bytes);
+        System.out.println(decodified.equals(text));
     }
 }

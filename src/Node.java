@@ -1,10 +1,12 @@
+import java.util.Arrays;
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Map;
 
 public class Node implements Comparable<Node> {
     private final Character character;
     private final int frequency;
-    private transient String binaryCode;
+    private transient BitCode bitCode;
     private final Node dir;
     private final Node esq;
 
@@ -17,24 +19,18 @@ public class Node implements Comparable<Node> {
     public Node(Character value, int frequency, Node child1, Node child2) {
         this.character = value;
         this.frequency = frequency;
-//        this.dir = max(child1, child2);
-//        this.esq = min(child1, child2);
-        this.dir = child1;
-        this.esq = child2;
+        this.dir = max(child1, child2);
+        this.esq = min(child1, child2);
     }
 
-    private Node max(Node child1, Node child2) {
-        if (child1.frequency > child2.frequency) return child1;
-        return child2;
+    private Node max(Node n1, Node n2) {
+        if (n1.frequency >= n2.frequency) return n1;
+        else return n2;
     }
 
-    private Node min(Node child1, Node child2) {
-        if (child1.frequency < child2.frequency) return child1;
-        return child2;
-    }
-
-    public Character getCharacter() {
-        return character;
+    private Node min(Node n1, Node n2) {
+        if (n1.frequency < n2.frequency) return n1;
+        else return n2;
     }
 
     public int getFrequency() {
@@ -46,31 +42,38 @@ public class Node implements Comparable<Node> {
         return Integer.compare(this.frequency, other.frequency);
     }
 
-    public Map<Character, String> setBinaryCode(String binaryCode) {
-        Map<Character, String> binaryCodeTable = new HashMap<>();
-        this.binaryCode = binaryCode;
-        if (character != null) binaryCodeTable.put(character, binaryCode);
+    public Map<Character, BitCode> setBinaryCode(BitCode bitCode) {
+        Map<Character, BitCode> binaryCodeTable = new HashMap<>();
+
+        this.bitCode = bitCode;
+        if (character != null) binaryCodeTable.put(character, bitCode);
 
         if (esq != null) {
-            binaryCodeTable.putAll(esq.setBinaryCode(binaryCode + "0"));
+            BitCode esqBitCode = new BitCode(bitCode.value() << 1, bitCode.length() + 1);
+            binaryCodeTable.putAll(esq.setBinaryCode(esqBitCode));
         }
 
         if (dir != null) {
-            binaryCodeTable.putAll(dir.setBinaryCode(binaryCode + "1"));
+            BitCode dirBitCode = new BitCode(bitCode.value() << 1 | 1, bitCode.length() + 1);
+            binaryCodeTable.putAll(dir.setBinaryCode(dirBitCode));
         }
+
         return binaryCodeTable;
     }
 
-    public Map<Character, String> createBinaryCodeTable() {
-        binaryCode = null;
-        Map<Character, String> binaryCodeTable = new HashMap<>();
+    public Map<Character, BitCode> createBinaryCodeTable() {
+        bitCode = null;
+        Map<Character, BitCode> binaryCodeTable = new HashMap<>();
+
 
         if (esq != null) {
-            binaryCodeTable.putAll(esq.setBinaryCode(Integer.toBinaryString(0)));
+            BitCode esqBitCode = new BitCode(0, 1);
+            binaryCodeTable.putAll(esq.setBinaryCode(esqBitCode));
         }
 
         if (dir != null) {
-            binaryCodeTable.putAll(dir.setBinaryCode(Integer.toBinaryString(1)));
+            BitCode dirBitCode = new BitCode(1, 1);
+            binaryCodeTable.putAll(dir.setBinaryCode(dirBitCode));
         }
         return binaryCodeTable;
     }
