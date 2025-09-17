@@ -19,11 +19,15 @@ public class HuffmanTree {
         binaryCodeTable = raiz.createBinaryCodeTable();
     }
 
+    public HuffmanTree(String text) {
+        this(new FrequencyTableMap(text));
+    }
+
     public void printBinaryCodeTable() {
         binaryCodeTable.forEach(((character, bCode) -> System.out.println("CHARACTER: " + character + " BITS: " + bCode.length() + " BYTES: " + bCode)));
     }
 
-    private byte[] codify(String text) {
+    private byte[] codifyText(String text) {
         final BitArray bitArray = new BitArray();
 
         char[] chars = text.toCharArray();
@@ -79,7 +83,7 @@ public class HuffmanTree {
     }
 
     public byte[] toCodifiedBytes(String text) {
-        final byte[] codifiedBinaryTable = codifyBinaryTable(), codifiedText = codify(text);
+        final byte[] codifiedBinaryTable = codifyBinaryTable(), codifiedText = codifyText(text);
         int len = codifiedText.length + codifiedBinaryTable.length;
         final byte[] codifiedBytes = new byte[len];
 
@@ -90,6 +94,9 @@ public class HuffmanTree {
         return codifiedBytes;
     }
 
-
+    public static byte[] codify(String text) {
+        HuffmanTree huffmanTree = new HuffmanTree(text);
+        return huffmanTree.toCodifiedBytes(text);
+    }
 
 }
