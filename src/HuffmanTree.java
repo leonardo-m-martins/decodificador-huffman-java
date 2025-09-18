@@ -43,7 +43,7 @@ public class HuffmanTree {
         short size = 1;
 
         for (Map.Entry<Character, BitCode> entry : binaryCodeTable.entrySet()) {
-            size += 2; // símbolo e tamanho do código
+            size += 3; // cahr (2 bytes) e tamanho do código (bits, 1 byte)
             size += (short) Math.ceil(entry.getValue().length() / 8.0);
         }
 
@@ -60,12 +60,15 @@ public class HuffmanTree {
             char c = entry.getKey();
             BitCode bitCode = entry.getValue();
 
-            codifiedBinarytable[i] = (byte) c;
-            i += 1;
+//            codifiedBinarytable[i] = (byte) c;
+            codifiedBinarytable[i] = (byte) ((c >> 8) & 0xFF); // byte mais significativo
+            i++;
+            codifiedBinarytable[i] = (byte) (c & 0xFF);
+            i++;
 
             int length = bitCode.length();
             codifiedBinarytable[i] = (byte) length;
-            i += 1;
+            i++;
 
             int value = bitCode.value();
             int byteNumber = (int) Math.ceil(bitCode.length() / 8.0);

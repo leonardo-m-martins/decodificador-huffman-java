@@ -20,7 +20,7 @@ public class Decoder {
 
         int index = 1;
         for (int i = 0; i < elementsInHeader; i++) {
-            char c = (char) codifiedBytes[index];
+            char c = (char) (((codifiedBytes[index] & 0xFF) << 8) | (codifiedBytes[++index] & 0xFF));
             index++;
 
             short length = codifiedBytes[index]; // total de bits
