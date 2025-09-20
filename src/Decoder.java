@@ -1,6 +1,7 @@
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.PriorityQueue;
 
 public class Decoder {
 
@@ -26,7 +27,7 @@ public class Decoder {
 
     private static MapAndIndex decodifyHeader(byte[] codifiedBytes) {
         final short elementsInHeader = codifiedBytes[0];
-        Map<BitCode, Character> invertedBinaryCodeTable = new HashMap<>(elementsInHeader);
+        PriorityQueue<HuffmanEntry> minHeap = new PriorityQueue<>();
 
         int index = 1;
         for (int i = 0; i < elementsInHeader; i++) {
@@ -35,26 +36,14 @@ public class Decoder {
             char c = s.charAt(0);
             index += numBytes;
 
-            short length = codifiedBytes[index]; // total de bits
-            short bitsInLastByte = (short) (length % 8);
-            short bytesLen = (short) Math.ceil(length / 8.0);
+            int length = codifiedBytes[index];
             index++;
 
-            int value = 0;
-            for (int j = 0; j < bytesLen; j++) {
-                if (j == bytesLen - 1) {
-                    value = (value << bitsInLastByte) | Byte.toUnsignedInt(codifiedBytes[index]);
-                }
-                else {
-                    value <<= 8;
-                    value |= Byte.toUnsignedInt(codifiedBytes[index]);
-                }
-                index++;
-            }
-
-            BitCode bitCode = new BitCode(value, length);
-            invertedBinaryCodeTable.put(bitCode, c);
+            HuffmanEntry huffmanEntry = new HuffmanEntry(c, length);
+            minHeap.add(huffmanEntry);
         }
+
+        Map<BitCode, Character> invertedBinaryCodeTable = HuffmanTree.createInvertedCodeTable(minHeap);
 
         return new MapAndIndex(invertedBinaryCodeTable, index);
     }

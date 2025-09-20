@@ -1,12 +1,8 @@
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class Node implements Comparable<Node> {
     private final Character character;
     private final int frequency;
-    private transient BitCode bitCode;
     private final Node dir;
     private final Node esq;
 
@@ -42,39 +38,25 @@ public class Node implements Comparable<Node> {
         return Integer.compare(this.frequency, other.frequency);
     }
 
-    public Map<Character, BitCode> setBinaryCode(BitCode bitCode) {
-        Map<Character, BitCode> binaryCodeTable = new HashMap<>();
+    public List<HuffmanEntry> getLeafNodes(int depth) {
+        if (character != null) return List.of(new HuffmanEntry(character, depth));
 
-        this.bitCode = bitCode;
-        if (character != null) binaryCodeTable.put(character, bitCode);
+        List<HuffmanEntry> leafNodes = new ArrayList<>();
 
         if (esq != null) {
-            BitCode esqBitCode = new BitCode(bitCode.value() << 1, bitCode.length() + 1);
-            binaryCodeTable.putAll(esq.setBinaryCode(esqBitCode));
+            leafNodes.addAll(esq.getLeafNodes(depth + 1));
         }
 
         if (dir != null) {
-            BitCode dirBitCode = new BitCode(bitCode.value() << 1 | 1, bitCode.length() + 1);
-            binaryCodeTable.putAll(dir.setBinaryCode(dirBitCode));
+            leafNodes.addAll(dir.getLeafNodes(depth + 1));
         }
 
-        return binaryCodeTable;
+        return leafNodes;
     }
 
-    public Map<Character, BitCode> createBinaryCodeTable() {
-        bitCode = null;
-        Map<Character, BitCode> binaryCodeTable = new HashMap<>();
-
-
-        if (esq != null) {
-            BitCode esqBitCode = new BitCode(0, 1);
-            binaryCodeTable.putAll(esq.setBinaryCode(esqBitCode));
-        }
-
-        if (dir != null) {
-            BitCode dirBitCode = new BitCode(1, 1);
-            binaryCodeTable.putAll(dir.setBinaryCode(dirBitCode));
-        }
-        return binaryCodeTable;
+    public PriorityQueue<HuffmanEntry> getHuffmanEntries() {
+        PriorityQueue<HuffmanEntry> minHeap = new PriorityQueue<>();
+        minHeap.addAll(getLeafNodes(0));
+        return minHeap;
     }
 }

@@ -3,7 +3,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class HuffmanTree {
-    private final Map<Character, BitCode> binaryCodeTable;
+    private final Map<Character, BitCode> codeTable;
+    private final List<HuffmanEntry> huffmanEntries;
 
     public HuffmanTree(FrequencyTableMap frequencyTableMap) {
         PriorityQueue<Node> minHeap = new PriorityQueue<>();
@@ -18,7 +19,9 @@ public class HuffmanTree {
         }
         Node raiz = minHeap.poll();
         assert raiz != null;
-        binaryCodeTable = raiz.createBinaryCodeTable();
+        PriorityQueue<HuffmanEntry> huffmanEntryPriorityQueue = raiz.getHuffmanEntries();
+        huffmanEntries = huffmanEntryPriorityQueue.stream().toList();
+        codeTable = HuffmanTree.createCodeTable(huffmanEntryPriorityQueue);
     }
 
     public HuffmanTree(String text) {
@@ -26,7 +29,7 @@ public class HuffmanTree {
     }
 
     public void printBinaryCodeTable() {
-        binaryCodeTable.forEach(((character, bCode) -> System.out.println("CHARACTER: " + character + " BITS: " + bCode.length() + " BYTES: " + bCode)));
+        codeTable.forEach(((character, bCode) -> System.out.println("CHARACTER: " + character + " BITS: " + bCode.length() + " BYTES: " + bCode)));
     }
 
     private byte[] codifyText(String text) {
@@ -34,7 +37,7 @@ public class HuffmanTree {
 
         char[] chars = text.toCharArray();
         for (char c : chars) {
-            BitCode bitCode = binaryCodeTable.get(c);
+            BitCode bitCode = codeTable.get(c);
             bitArray.add(bitCode);
         }
 
@@ -43,27 +46,16 @@ public class HuffmanTree {
 
     private byte[] codifyBinaryTable() {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        baos.write(binaryCodeTable.size());
+        baos.write(huffmanEntries.size());
 
-        for (Map.Entry<Character, BitCode> entry : binaryCodeTable.entrySet()) {
-            char c = entry.getKey();
-            BitCode bitCode = entry.getValue();
-            int length = bitCode.length();
-            int value = bitCode.value();
+        for (HuffmanEntry entry : huffmanEntries) {
+            char c = entry.character();
+            int length = entry.bits();
 
             byte[] bytesUtf8 = String.valueOf(c).getBytes(StandardCharsets.UTF_8);
             baos.write(bytesUtf8, 0, bytesUtf8.length);
 
             baos.write(length);
-
-            int byteNumber = (int) Math.ceil(bitCode.length() / 8.0);
-            for (int j = 0; j < byteNumber; j++) {
-                int shift = Math.max(0, length - 8 * (j + 1));
-                baos.write(value >>> shift);
-
-                int mask = (1 << shift) - 1;
-                value &= mask;
-            }
         }
 
         return baos.toByteArray();
@@ -84,6 +76,40 @@ public class HuffmanTree {
     public static byte[] codify(String text) {
         HuffmanTree huffmanTree = new HuffmanTree(text);
         return huffmanTree.toCodifiedBytes(text);
+    }
+
+    public static Map<Character, BitCode> createCodeTable(PriorityQueue<HuffmanEntry> minHeap) {
+        Map<Character, BitCode> codeMap = new LinkedHashMap<>(minHeap.size());
+        int lastValue = -1;
+        int lastLength = 0;
+        while (!minHeap.isEmpty()) {
+            HuffmanEntry huffmanEntry = minHeap.poll();
+            int length = huffmanEntry.bits();
+            BitCode bitCode = new BitCode(++lastValue << (length - lastLength), length);
+            codeMap.put(huffmanEntry.character(), bitCode);
+
+            lastLength = length;
+            lastValue = bitCode.value();
+        }
+
+        return codeMap;
+    }
+
+    public static Map<BitCode, Character> createInvertedCodeTable(PriorityQueue<HuffmanEntry> minHeap) {
+        Map<BitCode, Character> codeMap = new LinkedHashMap<>(minHeap.size());
+        int lastValue = -1;
+        int lastLength = 0;
+        while (!minHeap.isEmpty()) {
+            HuffmanEntry huffmanEntry = minHeap.poll();
+            int length = huffmanEntry.bits();
+            BitCode bitCode = new BitCode(++lastValue << (length - lastLength), length);
+            codeMap.put(bitCode, huffmanEntry.character());
+
+            lastLength = length;
+            lastValue = bitCode.value();
+        }
+
+        return codeMap;
     }
 
 }
