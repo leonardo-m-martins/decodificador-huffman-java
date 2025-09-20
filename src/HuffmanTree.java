@@ -1,4 +1,5 @@
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class HuffmanTree {
@@ -50,9 +51,8 @@ public class HuffmanTree {
             int length = bitCode.length();
             int value = bitCode.value();
 
-            baos.write((c >> 8) & 0xFF);
-            baos.write(c & 0xFF);
-
+            byte[] bytesUtf8 = String.valueOf(c).getBytes(StandardCharsets.UTF_8);
+            baos.write(bytesUtf8, 0, bytesUtf8.length);
 
             baos.write(length);
 
