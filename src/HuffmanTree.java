@@ -1,3 +1,4 @@
+import java.io.ByteArrayOutputStream;
 import java.util.*;
 
 public class HuffmanTree {
@@ -39,50 +40,33 @@ public class HuffmanTree {
         return bitArray.toByteArray();
     }
 
-    private short getHeaderSize() {
-        short size = 1;
-
-        for (Map.Entry<Character, BitCode> entry : binaryCodeTable.entrySet()) {
-            size += 3; // cahr (2 bytes) e tamanho do código (bits, 1 byte)
-            size += (short) Math.ceil(entry.getValue().length() / 8.0);
-        }
-
-        return size;
-    }
-
     private byte[] codifyBinaryTable() {
-        short headerSize = getHeaderSize();
-        final byte[] codifiedBinarytable = new byte[headerSize];
-        codifiedBinarytable[0] = (byte) binaryCodeTable.size();
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        baos.write(binaryCodeTable.size());
 
-        int i = 1;
         for (Map.Entry<Character, BitCode> entry : binaryCodeTable.entrySet()) {
             char c = entry.getKey();
             BitCode bitCode = entry.getValue();
-
-//            codifiedBinarytable[i] = (byte) c;
-            codifiedBinarytable[i] = (byte) ((c >> 8) & 0xFF); // byte mais significativo
-            i++;
-            codifiedBinarytable[i] = (byte) (c & 0xFF);
-            i++;
-
             int length = bitCode.length();
-            codifiedBinarytable[i] = (byte) length;
-            i++;
-
             int value = bitCode.value();
+
+            baos.write((c >> 8) & 0xFF);
+            baos.write(c & 0xFF);
+
+
+            baos.write(length);
+
             int byteNumber = (int) Math.ceil(bitCode.length() / 8.0);
             for (int j = 0; j < byteNumber; j++) {
                 int shift = Math.max(0, length - 8 * (j + 1));
-                codifiedBinarytable[i] = (byte) (value >>> shift);
-                i++;
+                baos.write(value >>> shift);
 
                 int mask = (1 << shift) - 1;
                 value &= mask;
             }
         }
 
-        return codifiedBinarytable;
+        return baos.toByteArray();
     }
 
     public byte[] toCodifiedBytes(String text) {
