@@ -41,7 +41,7 @@ public class Main {
     private static void decodify(String fileIn, String fileOut) throws IOException {
         Path path = Paths.get(fileIn);
         byte[] bytes = Files.readAllBytes(path);
-        String text = Decoder.decodify(bytes);
+        String text = HuffmanTree.decodify(bytes);
         saveFile(fileOut, text);
     }
 
