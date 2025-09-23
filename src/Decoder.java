@@ -18,11 +18,12 @@ public class Decoder {
 
     private static int getNumberOfBytesInChar(byte first) {
         int value = Byte.toUnsignedInt(first);
-        if ((value & 0b10000000) == 0) return 1;
-        if ((value & 0b11100000) == 0b11000000) return 2;
-        if ((value & 0b11110000) == 0b11100000) return 3;
-        if ((value & 0b11110000) == 0b11110000) return 4;
-        else throw new IllegalArgumentException();
+        switch (value & 0b1111_0000) {
+            case 0b1100_0000, 0b1101_0000 -> {return 2;}
+            case 0b1110_0000 -> {return 3;}
+            case 0b1111_0000 -> {return 4;}
+            default -> {return 1;}
+        }
     }
 
     private static MapAndIndex decodifyHeader(byte[] codifiedBytes) {
