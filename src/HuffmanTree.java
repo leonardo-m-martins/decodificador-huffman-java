@@ -3,6 +3,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class HuffmanTree {
+    public record MapAndIndex(Map<BitCode, Character> binaryTable, int index) {}
+
     private final Map<Character, BitCode> codeTable;
     private final List<HuffmanEntry> huffmanEntries;
 
@@ -46,7 +48,9 @@ public class HuffmanTree {
 
     private byte[] codifyBinaryTable() {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        baos.write(huffmanEntries.size());
+        int elements = huffmanEntries.size();
+        baos.write((elements >>> 8) & 0xFF);
+        baos.write(elements & 0xFF);
 
         for (HuffmanEntry entry : huffmanEntries) {
             char c = entry.character();
@@ -112,8 +116,6 @@ public class HuffmanTree {
         return codeMap;
     }
 
-    public record MapAndIndex(Map<BitCode, Character> binaryTable, int index) {}
-
     public static String decodify(byte[] codifiedBytes) {
         MapAndIndex mapAndIndex = decodifyHeader(codifiedBytes);
         Map<BitCode, Character> binaryTable = mapAndIndex.binaryTable();
@@ -134,13 +136,15 @@ public class HuffmanTree {
     }
 
     private static MapAndIndex decodifyHeader(byte[] codifiedBytes) {
-        final short elementsInHeader = codifiedBytes[0];
+        final int elementsInHeader = (Byte.toUnsignedInt(codifiedBytes[0]) << 8) | Byte.toUnsignedInt(codifiedBytes[1]);
         PriorityQueue<HuffmanEntry> minHeap = new PriorityQueue<>();
 
-        int index = 1;
+        int index = 2;
         for (int i = 0; i < elementsInHeader; i++) {
             int numBytes = getNumberOfBytesInChar(codifiedBytes[index]);
-            String s = new String(codifiedBytes, index, index + numBytes, StandardCharsets.UTF_8);
+            byte[] bytes = new byte[numBytes];
+            System.arraycopy(codifiedBytes, index, bytes, 0, numBytes);
+            String s = new String(bytes, StandardCharsets.UTF_8);
             char c = s.charAt(0);
             index += numBytes;
 
