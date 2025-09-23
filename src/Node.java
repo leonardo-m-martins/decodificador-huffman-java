@@ -39,7 +39,10 @@ public class Node implements Comparable<Node> {
     }
 
     public List<HuffmanEntry> getLeafNodes(int depth) {
-        if (character != null) return List.of(new HuffmanEntry(character, depth));
+        if (character != null) {
+            if (depth == 0) depth++;
+            return List.of(new HuffmanEntry(character, depth));
+        }
 
         List<HuffmanEntry> leafNodes = new ArrayList<>();
 
