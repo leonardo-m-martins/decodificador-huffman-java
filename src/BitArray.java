@@ -36,7 +36,7 @@ public class BitArray {
     }
 
     public void add(BitCode bitCode) {
-        int value = bitCode.value();
+        long value = bitCode.value();
         int length = bitCode.length();
         add(value, length);
     }
@@ -50,7 +50,7 @@ public class BitArray {
         add(value, length);
     }
 
-    public void add(int value, int length) {
+    public void add(long value, int length) {
         ensureCapacity(sizeBits + length);
 
         if (length <= BITS_PER_WORD - bitsInLastWord) {
@@ -122,7 +122,7 @@ public class BitArray {
             if (i == currentWord) bitsInWord = bitsInLastWord;
             else bitsInWord = BITS_PER_WORD;
             for (int j = 1; j <= bitsInWord; j++) {
-                int value = leftover.value();
+                long value = leftover.value();
                 int length = leftover.length();
                 int bit = (int) (word >>> (bitsInWord - j) & 1);
                 value = (value << 1) | bit;

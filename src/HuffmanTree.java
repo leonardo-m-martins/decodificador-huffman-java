@@ -84,7 +84,7 @@ public class HuffmanTree {
 
     public static Map<Character, BitCode> createCodeTable(PriorityQueue<HuffmanEntry> minHeap) {
         Map<Character, BitCode> codeMap = new LinkedHashMap<>(minHeap.size());
-        int lastValue = -1;
+        long lastValue = -1;
         int lastLength = 0;
         while (!minHeap.isEmpty()) {
             HuffmanEntry huffmanEntry = minHeap.poll();
@@ -101,7 +101,7 @@ public class HuffmanTree {
 
     public static Map<BitCode, Character> createInvertedCodeTable(PriorityQueue<HuffmanEntry> minHeap) {
         Map<BitCode, Character> codeMap = new LinkedHashMap<>(minHeap.size());
-        int lastValue = -1;
+        long lastValue = -1;
         int lastLength = 0;
         while (!minHeap.isEmpty()) {
             HuffmanEntry huffmanEntry = minHeap.poll();
