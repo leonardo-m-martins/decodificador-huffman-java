@@ -112,7 +112,7 @@ public class BitArray {
         return bitArray;
     }
 
-    public String decode(Map<BitCode, Character> binaryCodeTable) {
+    public String decode(Map<BitCode, Integer> binaryCodeTable) {
         StringBuilder text = new StringBuilder();
 
         BitCode leftover = new BitCode(0, 0);
@@ -130,8 +130,8 @@ public class BitArray {
                 BitCode toSearch = new BitCode(value, length);
 
                 if (binaryCodeTable.containsKey(toSearch)) {
-                    char c = binaryCodeTable.get(toSearch);
-                    text.append(c);
+                    int codePoint = binaryCodeTable.get(toSearch);
+                    text.appendCodePoint(codePoint);
                     leftover = new BitCode(0, 0);
                 }
                 else {

@@ -1,19 +1,19 @@
 import java.util.*;
 
 public class Node implements Comparable<Node> {
-    private final Character character;
+    private final Integer codePoint;
     private final int frequency;
     private final Node dir;
     private final Node esq;
 
-    public Node(Character value, int frequency) {
-        this.character = value;
+    public Node(Integer value, int frequency) {
+        this.codePoint = value;
         this.frequency = frequency;
         dir = esq = null;
     }
 
-    public Node(Character value, int frequency, Node child1, Node child2) {
-        this.character = value;
+    public Node(Integer value, int frequency, Node child1, Node child2) {
+        this.codePoint = value;
         this.frequency = frequency;
         this.dir = max(child1, child2);
         this.esq = min(child1, child2);
@@ -39,9 +39,9 @@ public class Node implements Comparable<Node> {
     }
 
     public List<HuffmanEntry> getLeafNodes(int depth) {
-        if (character != null) {
+        if (codePoint != null) {
             if (depth == 0) depth++;
-            return List.of(new HuffmanEntry(character, depth));
+            return List.of(new HuffmanEntry(codePoint, depth));
         }
 
         List<HuffmanEntry> leafNodes = new ArrayList<>();

@@ -3,7 +3,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
-public class FrequencyTableMap extends HashMap<Character, Integer> implements Map<Character, Integer> {
+public class FrequencyTableMap extends HashMap<Integer, Integer> implements Map<Integer, Integer> {
 
     public FrequencyTableMap() {
         super();
@@ -12,23 +12,6 @@ public class FrequencyTableMap extends HashMap<Character, Integer> implements Ma
     public FrequencyTableMap(String text) {
         this();
 
-        for (Character c : text.toCharArray()) {
-            merge(c, 1, Integer::sum);
-        }
-    }
-
-    public FrequencyTableMap(Path path) {
-        this();
-
-        try {
-            String text = Files.readString(path);
-
-            for (Character c : text.toCharArray()) {
-                merge(c, 1, Integer::sum);
-            }
-
-        } catch (IOException ex) {
-            System.err.println("Erro ao ler o arquivo" + ex.getMessage());
-        }
+        text.codePoints().forEach(codePoint -> merge(codePoint, 1, Integer::sum));
     }
 }

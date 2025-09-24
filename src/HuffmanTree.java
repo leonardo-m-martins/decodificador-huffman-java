@@ -1,11 +1,13 @@
 import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class HuffmanTree {
-    public record MapAndIndex(Map<BitCode, Character> binaryTable, int index) {}
+    public record MapAndIndex(Map<BitCode, Integer> binaryTable, int index) {}
 
-    private final Map<Character, BitCode> codeTable;
+    private final Map<Integer, BitCode> codeTable;
     private final List<HuffmanEntry> huffmanEntries;
 
     public HuffmanTree(FrequencyTableMap frequencyTableMap) {
@@ -37,26 +39,27 @@ public class HuffmanTree {
     private byte[] codifyText(String text) {
         final BitArray bitArray = new BitArray();
 
-        char[] chars = text.toCharArray();
-        for (char c : chars) {
-            BitCode bitCode = codeTable.get(c);
+        text.codePoints().forEach(codePoint -> {
+            BitCode bitCode = codeTable.get(codePoint);
             bitArray.add(bitCode);
-        }
+        });
 
         return bitArray.toByteArray();
     }
 
     private byte[] codifyBinaryTable() {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        int elements = huffmanEntries.size();
-        baos.write((elements >>> 8) & 0xFF);
-        baos.write(elements & 0xFF);
+        int elementsInHeader = huffmanEntries.size();
+        byte[] bytesFromInt = ByteBuffer.allocate(4).putInt(elementsInHeader).array();
+        for (byte b : bytesFromInt) {
+            baos.write(b);
+        }
 
         for (HuffmanEntry entry : huffmanEntries) {
-            char c = entry.character();
+            int codePoint = entry.codePoint();
             int length = entry.bits();
 
-            byte[] bytesUtf8 = String.valueOf(c).getBytes(StandardCharsets.UTF_8);
+            byte[] bytesUtf8 = Character.toString(codePoint).getBytes(StandardCharsets.UTF_8);
             baos.write(bytesUtf8, 0, bytesUtf8.length);
 
             baos.write(length);
@@ -82,15 +85,15 @@ public class HuffmanTree {
         return huffmanTree.toCodifiedBytes(text);
     }
 
-    public static Map<Character, BitCode> createCodeTable(PriorityQueue<HuffmanEntry> minHeap) {
-        Map<Character, BitCode> codeMap = new LinkedHashMap<>(minHeap.size());
+    public static Map<Integer, BitCode> createCodeTable(PriorityQueue<HuffmanEntry> minHeap) {
+        Map<Integer, BitCode> codeMap = new LinkedHashMap<>(minHeap.size());
         long lastValue = -1;
         int lastLength = 0;
         while (!minHeap.isEmpty()) {
             HuffmanEntry huffmanEntry = minHeap.poll();
             int length = huffmanEntry.bits();
             BitCode bitCode = new BitCode(++lastValue << (length - lastLength), length);
-            codeMap.put(huffmanEntry.character(), bitCode);
+            codeMap.put(huffmanEntry.codePoint(), bitCode);
 
             lastLength = length;
             lastValue = bitCode.value();
@@ -99,15 +102,15 @@ public class HuffmanTree {
         return codeMap;
     }
 
-    public static Map<BitCode, Character> createInvertedCodeTable(PriorityQueue<HuffmanEntry> minHeap) {
-        Map<BitCode, Character> codeMap = new LinkedHashMap<>(minHeap.size());
+    public static Map<BitCode, Integer> createInvertedCodeTable(PriorityQueue<HuffmanEntry> minHeap) {
+        Map<BitCode, Integer> codeMap = new LinkedHashMap<>(minHeap.size());
         long lastValue = -1;
         int lastLength = 0;
         while (!minHeap.isEmpty()) {
             HuffmanEntry huffmanEntry = minHeap.poll();
             int length = huffmanEntry.bits();
             BitCode bitCode = new BitCode(++lastValue << (length - lastLength), length);
-            codeMap.put(bitCode, huffmanEntry.character());
+            codeMap.put(bitCode, huffmanEntry.codePoint());
 
             lastLength = length;
             lastValue = bitCode.value();
@@ -118,7 +121,7 @@ public class HuffmanTree {
 
     public static String decodify(byte[] codifiedBytes) {
         MapAndIndex mapAndIndex = decodifyHeader(codifiedBytes);
-        Map<BitCode, Character> binaryTable = mapAndIndex.binaryTable();
+        Map<BitCode, Integer> binaryTable = mapAndIndex.binaryTable();
 
         int index = mapAndIndex.index();
         BitArray bitArray = BitArray.fromByteArray(codifiedBytes, index);
@@ -136,28 +139,34 @@ public class HuffmanTree {
     }
 
     private static MapAndIndex decodifyHeader(byte[] codifiedBytes) {
-        final int elementsInHeader = (Byte.toUnsignedInt(codifiedBytes[0]) << 8) | Byte.toUnsignedInt(codifiedBytes[1]);
+        final int elementsInHeader = getIntFromBytes(codifiedBytes, 0);
         PriorityQueue<HuffmanEntry> minHeap = new PriorityQueue<>();
 
-        int index = 2;
+        int index = 4;
         for (int i = 0; i < elementsInHeader; i++) {
             int numBytes = getNumberOfBytesInChar(codifiedBytes[index]);
             byte[] bytes = new byte[numBytes];
             System.arraycopy(codifiedBytes, index, bytes, 0, numBytes);
             String s = new String(bytes, StandardCharsets.UTF_8);
-            char c = s.charAt(0);
+            int codePoint = s.codePointAt(0);
             index += numBytes;
 
             int length = codifiedBytes[index];
             index++;
 
-            HuffmanEntry huffmanEntry = new HuffmanEntry(c, length);
+            HuffmanEntry huffmanEntry = new HuffmanEntry(codePoint, length);
             minHeap.add(huffmanEntry);
         }
 
-        Map<BitCode, Character> invertedBinaryCodeTable = HuffmanTree.createInvertedCodeTable(minHeap);
+        Map<BitCode, Integer> invertedBinaryCodeTable = HuffmanTree.createInvertedCodeTable(minHeap);
 
         return new MapAndIndex(invertedBinaryCodeTable, index);
+    }
+
+    private static int getIntFromBytes(byte[] bytes, int offset) {
+        return ByteBuffer.wrap(bytes, offset, 4)
+                .order(ByteOrder.BIG_ENDIAN) // ou LITTLE_ENDIAN
+                .getInt();
     }
 
 }
